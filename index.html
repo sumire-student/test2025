@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coffee Maker</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="images/Hello.png" alt="Hello!!" class="hello-img">
+        </div>
+        <form class="coffee-form">
+            <div class="coffee-row coffee-type-row">
+                <div class="coffee-icons">
+                    <img src="images/beans.png" alt="beans" class="coffee-icon">
+                    <img src="images/Caffeelate.png" alt="caffeelate" class="coffee-icon">
+                </div>
+                <div class="coffee-options">
+                    <label><input type="checkbox" name="coffee" value="coffee"> Coffee</label>
+                    <label class="nowrap"><input type="checkbox" name="coffee" value="caffeelate"> Caffee late</label>
+                </div>
+            </div>
+            <div class="dotted"></div>
+            <div class="coffee-row coffee-temp-row">
+                <label><input type="checkbox" name="temp" value="ice"> Ice <img src="images/Ice.png" alt="ice" class="icon-img right-icon"></label>
+                <label><input type="checkbox" name="temp" value="hot"> Hot <img src="images/Hot.png" alt="hot" class="icon-img right-icon"></label>
+            </div>
+            <div class="dotted"></div>
+            <div class="coffee-row coffee-size-row">
+                <div class="size-icons">
+                    <img src="images/Regular.png" alt="regular" class="size-icon">
+                    <img src="images/Large.png" alt="large" class="size-icon">
+                </div>
+                <div class="size-options">
+                    <label><input type="checkbox" name="size" value="regular"> Regular</label>
+                    <label><input type="checkbox" name="size" value="large"> Large</label>
+                </div>
+            </div>
+            <div class="dotted"></div>
+            <div class="coffee-strength-row" id="strength-row" style="display:none; flex-direction: row; align-items: center; justify-content: flex-start; margin-top: 10px;">
+                <img src="images/Not_select.png" alt="Not selected" id="not-select-img">
+                <div class="strength-options">
+                    <label><input type="checkbox" name="strength" value="strong"> Strong</label><br>
+                    <label><input type="checkbox" name="strength" value="normal"> Normal</label><br>
+                    <label><input type="checkbox" name="strength" value="weak"> Weak</label>
+                </div>
+            </div>
+        </form>
+    <script>
+document.addEventListener('DOMContentLoaded', function() {
+  // コーヒー/カフェラテ（ラジオボタン的挙動）
+  const coffeeGroup = document.querySelectorAll('input[name="coffee"]');
+  coffeeGroup.forEach(cb => {
+    cb.addEventListener('change', function() {
+      if (cb.checked) {
+        coffeeGroup.forEach(other => { if (other !== cb) other.checked = false; });
+      }
+      // カフェラテ選択時のみストレングス表示
+      const strengthRow = document.getElementById('strength-row');
+      const notSelectImg = document.getElementById('not-select-img');
+      if (document.querySelector('input[name="coffee"][value="caffeelate"]').checked) {
+        strengthRow.style.display = 'flex';
+      } else {
+        strengthRow.style.display = 'none';
+        notSelectImg.src = 'images/Not_select.png';
+        document.querySelectorAll('input[name="strength"]').forEach(cb => { cb.checked = false; });
+      }
+    });
+  });
+
+  // アイス/ホット
+  const tempGroup = document.querySelectorAll('input[name="temp"]');
+  tempGroup.forEach(cb => {
+    cb.addEventListener('change', function() {
+      if (cb.checked) {
+        tempGroup.forEach(other => { if (other !== cb) other.checked = false; });
+      }
+    });
+  });
+
+  // レギュラー/ラージ
+  const sizeGroup = document.querySelectorAll('input[name="size"]');
+  sizeGroup.forEach(cb => {
+    cb.addEventListener('change', function() {
+      if (cb.checked) {
+        sizeGroup.forEach(other => { if (other !== cb) other.checked = false; });
+      }
+    });
+  });
+
+  // ストレングス
+  const strengthRow = document.getElementById('strength-row');
+  const notSelectImg = document.getElementById('not-select-img');
+  const strengthGroup = document.querySelectorAll('input[name="strength"]');
+  strengthGroup.forEach(cb => {
+    cb.addEventListener('change', function() {
+      if (cb.checked) {
+        strengthGroup.forEach(other => { if (other !== cb) other.checked = false; });
+        let newSrc = 'images/Not_select.png';
+        if (cb.value === 'strong') newSrc = 'images/Strong.png';
+        if (cb.value === 'normal') newSrc = 'images/Normal.png';
+        if (cb.value === 'weak') newSrc = 'images/Weak.png';
+        notSelectImg.src = newSrc;
+      } else {
+        // どれも選択されていない場合はNot_select.pngに戻す
+        if (![...strengthGroup].some(c => c.checked)) {
+          notSelectImg.src = 'images/Not_select.png';
+        }
+      }
+    });
+  });
+
+  // すべてのグループで選択されているかチェックし、完了時にUIをロック＆画像を2秒かけて変更
+  function checkAllSelectedAndLock() {
+    const coffee = document.querySelector('input[name="coffee"]:checked');
+    const temp = document.querySelector('input[name="temp"]:checked');
+    const size = document.querySelector('input[name="size"]:checked');
+    const isCaffeelate = document.querySelector('input[name="coffee"][value="caffeelate"]').checked;
+    let shouldLock = false;
+    if (isCaffeelate) {
+      // カフェラテ時はstrengthも必須
+      const strength = document.querySelector('input[name="strength"]:checked');
+      if (coffee && temp && size && strength) shouldLock = true;
+    } else {
+      // コーヒー時はstrength不要
+      if (coffee && temp && size) shouldLock = true;
+    }
+    if (shouldLock) {
+      document.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+        cb.disabled = true;
+      });
+      const helloImg = document.querySelector('.hello-img');
+      let overlay = document.querySelector('.waiting-overlay');
+      if (!overlay) {
+        overlay = document.createElement('img');
+        overlay.className = 'waiting-overlay';
+        overlay.style.position = 'absolute';
+        overlay.style.left = 0;
+        overlay.style.top = 0;
+        overlay.style.width = '100%';
+        overlay.style.height = '100%';
+        overlay.style.opacity = 0;
+        overlay.style.transition = 'opacity 2s';
+        overlay.style.pointerEvents = 'none';
+        helloImg.parentNode.style.position = 'relative';
+        helloImg.parentNode.appendChild(overlay);
+      }
+      overlay.src = 'images/Waiting.png';
+      overlay.style.opacity = 0;
+      overlay.style.zIndex = 2;
+      overlay.style.width = helloImg.offsetWidth + 'px';
+      overlay.style.height = helloImg.offsetHeight + 'px';
+      overlay.style.left = helloImg.offsetLeft + 'px';
+      overlay.style.top = helloImg.offsetTop + 'px';
+      helloImg.style.transition = 'opacity 2s';
+      helloImg.style.zIndex = 1;
+      setTimeout(() => {
+        overlay.style.opacity = 1;
+        helloImg.style.opacity = 0;
+      }, 10);
+      setTimeout(() => {
+        helloImg.src = 'images/Waiting.png';
+        helloImg.style.opacity = 1;
+        overlay.style.opacity = 0;
+        overlay.style.zIndex = 0;
+      }, 2010);
+      // 5秒後にenjoy.pngへ2秒かけてクロスフェード
+      setTimeout(() => {
+        let enjoyOverlay = document.querySelector('.enjoy-overlay');
+        if (!enjoyOverlay) {
+          enjoyOverlay = document.createElement('img');
+          enjoyOverlay.className = 'enjoy-overlay';
+          enjoyOverlay.style.position = 'absolute';
+          enjoyOverlay.style.left = helloImg.offsetLeft + 'px';
+          enjoyOverlay.style.top = helloImg.offsetTop + 'px';
+          enjoyOverlay.style.width = helloImg.offsetWidth + 'px';
+          enjoyOverlay.style.height = helloImg.offsetHeight + 'px';
+          enjoyOverlay.style.opacity = 0;
+          enjoyOverlay.style.transition = 'opacity 2s';
+          enjoyOverlay.style.pointerEvents = 'none';
+          helloImg.parentNode.appendChild(enjoyOverlay);
+        } else {
+          enjoyOverlay.style.width = helloImg.offsetWidth + 'px';
+          enjoyOverlay.style.height = helloImg.offsetHeight + 'px';
+          enjoyOverlay.style.left = helloImg.offsetLeft + 'px';
+          enjoyOverlay.style.top = helloImg.offsetTop + 'px';
+        }
+        enjoyOverlay.src = 'images/Enjoy.png';
+        enjoyOverlay.style.opacity = 0;
+        enjoyOverlay.style.zIndex = 2;
+        helloImg.style.transition = 'opacity 2s';
+        helloImg.style.zIndex = 1;
+        setTimeout(() => {
+          enjoyOverlay.style.opacity = 1;
+          helloImg.style.opacity = 0;
+        }, 10);
+        setTimeout(() => {
+          helloImg.src = 'images/Enjoy.png';
+          helloImg.style.opacity = 1;
+          enjoyOverlay.style.opacity = 0;
+          enjoyOverlay.style.zIndex = 0;
+          setTimeout(() => {
+            document.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+              cb.checked = false;
+              cb.disabled = false;
+            });
+            notSelectImg.src = 'images/Not_select.png';
+            strengthRow.style.display = 'none';
+            helloImg.style.transition = '';
+            helloImg.src = 'images/Hello.png';
+            helloImg.style.opacity = 1;
+          }, 5000);
+        }, 2010);
+      }, 7010);
+    }
+  }
+
+  // 各グループのイベントでcheckAllSelectedAndLockのみ呼ぶ
+  coffeeGroup.forEach(cb => {
+    cb.addEventListener('change', function() {
+      checkAllSelectedAndLock();
+    });
+  });
+  tempGroup.forEach(cb => {
+    cb.addEventListener('change', function() {
+      checkAllSelectedAndLock();
+    });
+  });
+  sizeGroup.forEach(cb => {
+    cb.addEventListener('change', function() {
+      checkAllSelectedAndLock();
+    });
+  });
+  strengthGroup.forEach(cb => {
+    cb.addEventListener('change', function() {
+      checkAllSelectedAndLock();
+    });
+  });
+});
+</script>
+</div>
+</body>
+</html>
